@@ -6,8 +6,7 @@
 ##
 ##########################################################################################################
 
-import os
-execfile(os.environ["PYTHONSTARTUP"])
+import os,sys
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -18,7 +17,7 @@ import logging as lg
 lg.basicConfig(level=lg.INFO, format="%(asctime)s %(levelname)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
 def init_params():
-  proj_h5_dir = os.environ["SPACE"] + "/h5/"
+  proj_h5_dir = os.environ["HOME"] + "/h5/"
   params = {  "proj_h5_dir"   :   proj_h5_dir,
               "h5_file"       :   proj_h5_dir + "indicator_8_18.h5",
               "save_ext"      :   "",
@@ -27,8 +26,8 @@ def init_params():
   opts, args = getopt.getopt(sys.argv[1:], "h:p:f:t:s:d", command_line_options)
   for opt, arg in opts:
     if opt in ('h', '--help'):
-      print"python py/peturbation_analysis.py --proj_h5_dir <project h5 directory> --h5_file <hdf5 file> --save_ext <filename> --debug"
-      print"python py/peturbation_analysis.py --h5_file indicator_8_2.h5 --save_ext figure_name.png --debug"
+      print("python py/peturbation_analysis.py --proj_h5_dir <project h5 directory> --h5_file <hdf5 file> --save_ext <filename> --debug")
+      print("python py/peturbation_analysis.py --h5_file indicator_8_2.h5 --save_ext figure_name.png --debug")
       sys.exit()
     elif opt in ('-p', '--proj_h5_dir'):
       params['proj_h5_dir'] = arg
@@ -41,16 +40,16 @@ def init_params():
   return params
 
 def getDataKeys(h5_data):
-  data_keys = np.array(h5_data.keys())
-  data_keys = data_keys[['info' != k for k in data_keys]]
-  num_keys = len(data_keys)
-  return data_keys, num_keys
+    data_keys = np.array(list(h5_data.keys()))
+    data_keys = data_keys[['info' != k for k in data_keys]]
+    num_keys = data_keys.size
+    return data_keys, num_keys
 
 def extractH5Data(h5_file):
   h5_data = h5py.File(h5_file, 'r')
   peturbed_parameter = h5_file.split('/')[-1].split('_')[0]
-  peturbed_values = h5_data['info']['values'].value
-  frequency = h5_data['info']['frequency'].value
+  peturbed_values = h5_data['info']['values'][()]
+  frequency = h5_data['info']['frequency'][()]
   data_keys, num_keys = getDataKeys(h5_data)
   return h5_data, peturbed_parameter, peturbed_values, frequency, data_keys, num_keys
 
@@ -147,15 +146,15 @@ def makePowerComparisonPlot(h5_data, data_keys, peturbed_values, peturbed_parame
   return filename
 
 def main():
-  lg.info('Starting main function...')
-  params = init_params()
-  if params['debug']:
-    lg.info('Entering debug mode.')
-    return None
-  lg.info('extracting data from h5_file: ' + params['h5_file'] + '...')
-  h5_data, peturbed_parameter, peturbed_values, frequency, data_keys, num_keys = extractH5Data(params['h5_file'])
-  lg.info('making dynamics comparison plot...')
-  filename = makeDynamicsComparisonPlot(peturbed_parameter, num_keys, data_keys, h5_data, peturbed_values, params['save_ext'],params['proj_h5_dir'], frequency) 
+    print(dt.datetime.now().isoformat() + ' INFO: ' + 'Starting main function...')
+    params = init_params()
+    if params['debug']:
+        primt(dt.datetime.now().isoformat() + ' INFO: ' + 'Entering debug mode.')
+        return None
+    print(dt.datetime.now().isoformat() + ' INFO: ' + 'Extracting data from h5_file: ' + params['h5_file'] + '...')
+    h5_data, peturbed_parameter, peturbed_values, frequency, data_keys, num_keys = extractH5Data(params['h5_file'])
+    print(dt.datetime.now().isoformat() + ' INFO: ' + 'Making dynamics comparison plot...')
+  filename = makeDynamicsComparisonPlot(peturbed_parameter, num_keys, data_keys, h5_data, peturbed_values, params['save_ext'],params['proj_h5_dir'], frequency)
   lg.info('Calcium Dynamics image saved: ' + filename)
   colours = ['aqua', 'mediumaquamarine', 'green', 'lime', 'yellow']
   lg.info('making fluorescence comparison figure...')
@@ -169,4 +168,3 @@ def main():
 
 if __name__ == "__main__":
   main()
-
